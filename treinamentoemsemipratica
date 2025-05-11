@@ -1,0 +1,109 @@
+import tkinter as tk
+from tkinter import messagebox
+from datetime import datetime
+
+class RegistroApp:
+    def _init_(self, master):
+        self.master = master
+        self.master.title("Sistema de Relatórios")
+        self.master.geometry("600x500")
+        self.master.configure(bg='white')
+
+        self.dados_registrados = []
+        self.protocolo_count = 0
+
+        self.menu_principal()
+
+    def menu_principal(self):
+        self.limpar_tela()
+        tk.Label(self.master, text="Menu Principal", font=("Arial", 24), bg="white").pack(pady=20)
+
+        tk.Button(self.master, text="Registrar Ocorrência", font=("Arial", 14), command=self.menu_relatorios).pack(pady=10)
+        tk.Button(self.master, text="Encerrar Programa", font=("Arial", 14), command=self.encerrar_programa).pack(pady=10)
+
+    def menu_relatorios(self):
+        self.limpar_tela()
+        tk.Label(self.master, text="Tipo de Ocorrência", font=("Arial", 24), bg="white").pack(pady=20)
+
+        tk.Button(self.master, text="Enchentes", font=("Arial", 14), command=lambda: self.menu_detalhes("Enchentes")).pack(pady=10)
+        tk.Button(self.master, text="Postes Quebrados", font=("Arial", 14), command=lambda: self.menu_detalhes("Postes Quebrados")).pack(pady=10)
+        tk.Button(self.master, text="Asfalto Danificado", font=("Arial", 14), command=lambda: self.menu_detalhes("Asfalto Danificado")).pack(pady=10)
+
+    def menu_detalhes(self, tipo):
+        self.limpar_tela()
+        tk.Label(self.master, text=f"Relatar: {tipo}", font=("Arial", 24), bg="white").pack(pady=20)
+
+        self.entries = {}
+        campos = ["Nome", "CPF", "Lugar"]
+        for campo in campos:
+            tk.Label(self.master, text=f"{campo}:", font=("Arial", 14), bg="white").pack()
+            entry = tk.Entry(self.master, font=("Arial", 14), width=40)
+            entry.pack(pady=5)
+            self.entries[campo] = entry
+
+        # Campo de descrição
+        tk.Label(self.master, text="Descrição da Ocorrência:", font=("Arial", 14), bg="white").pack()
+        self.descricao_text = tk.Text(self.master, font=("Arial", 12), width=45, height=4)
+        self.descricao_text.pack(pady=10)
+
+        tk.Button(self.master, text="Enviar Relatório", font=("Arial", 14),
+                  command=lambda: self.registrar(tipo)).pack(pady=20)
+
+    def registrar(self, tipo):
+        dados = {campo: entrada.get() for campo, entrada in self.entries.items()}
+        descricao = self.descricao_text.get("1.0", tk.END).strip()
+
+        if not all(dados.values()) or not descricao:
+            messagebox.showwarning("Campos vazios", "Por favor, preencha todos os campos e a descrição.")
+            return
+
+        self.protocolo_count += 1
+        protocolo = self.protocolo_count
+        agora = datetime.now()
+        dados["Data"] = agora.strftime("%d/%m/%Y")
+        dados["Hora"] = agora.strftime("%H:%M:%S")
+        dados["Tipo"] = tipo
+        dados["Protocolo"] = protocolo
+        dados["Descrição"] = descricao
+
+        self.dados_registrados.append(dados)
+
+        self.mostrar_ocorrencia(dados)
+
+    def mostrar_ocorrencia(self, dados):
+        janela = tk.Toplevel(self.master)
+        janela.title("Ocorrência Registrada")
+        janela.geometry("500x500")
+        janela.configure(bg="white")
+
+        tk.Label(janela, text="Ocorrência Enviada", font=("Arial", 20), bg="white").pack(pady=10)
+
+        texto = (
+            f"Tipo: {dados['Tipo']}\n"
+            f"Nome: {dados['Nome']}\n"
+            f"CPF: {dados['CPF']}\n"
+            f"Lugar: {dados['Lugar']}\n"
+            f"Descrição: {dados['Descrição']}\n"
+            f"Data: {dados['Data']}\n"
+            f"Hora: {dados['Hora']}\n"
+            f"Protocolo: {dados['Protocolo']}\n"
+        )
+
+        text_box = tk.Text(janela, font=("Arial", 12), width=60, height=20)
+        text_box.pack(pady=10)
+        text_box.insert(tk.END, texto)
+        text_box.config(state="disabled")
+
+        tk.Button(janela, text="Voltar ao Menu Principal", font=("Arial", 12), command=self.menu_principal).pack(pady=10)
+
+    def limpar_tela(self):
+        for widget in self.master.winfo_children():
+            widget.destroy()
+
+    def encerrar_programa(self):
+        self.master.destroy()
+
+if _name_ == "_main_":
+    root = tk.Tk()
+    app = RegistroApp(root)
+    root.mainloop()
